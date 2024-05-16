@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Office Pro</title>
+  <style>
+    .completed {
+      text-decoration: line-through;
+      color: grey;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Office Pro</h1>
+
+  <h2>Areas</h2>
+  <form action="{{ url_for('add_area') }}" method="POST">
+    <input type="text" name="area_name" placeholder="Area Name" required>
+    <input type="text" name="time_commitment" placeholder="Time Commitment (hours/week)" required>
+    <button type="submit">Add Area</button>
+  </form>
+  <ul>
+    {% for area in areas %}
+    <li>{{ area.name }} - {{ area.time_commitment }} hours/week
+      <ul>
+        {% for project in area.projects %}
+        <li>{{ project.name }}
+          <ul>
+            {% for task in project.tasks %}
+            <li class="{% if task.completed %}completed{% endif %}">
+              <form action="{{ url_for('complete_task', task_id=loop.index0) }}" method="POST" style="display:inline;">
+                <input type="checkbox" onchange="this.form.submit()" {% if task.completed %}checked{% endif %}>
+              </form>
+              {{ task.name }} - {{ task.due_date }} - {{ task.priority }}
+              <form action="{{ url_for('edit_task', task_id=loop.index0) }}" method="POST" style="display:inline;">
+                <input type="text" name="task_name" value="{{ task.name }}" required>
+                <input type="date" name="due_date" value="{{ task.due_date }}" required>
+                <select name="priority" required>
+                  <option value="Must Do Today" {% if task.priority=='Must Do Today' %}selected{% endif %}>Must Do Today
+                  </option>
+                  <option value="Should Do Today" {% if task.priority=='Should Do Today' %}selected{% endif %}>Should Do
+                    Today</option>
+                  <option value="Could Do Today" {% if task.priority=='Could Do Today' %}selected{% endif %}>Could Do
+                    Today</option>
+                  <option value="Nice to Do Today" {% if task.priority=='Nice to Do Today' %}selected{% endif %}>Nice to
+                    Do Today</option>
+                </select>
+                <button type="submit">Edit</button>
+              </form>
+              <a href="{{ url_for('delete_task', task_id=loop.index0) }}">Delete</a>
+            </li>
+            {% endfor %}
+          </ul>
+        </li>
+        {% endfor %}
+      </ul>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <h2>Add Project</h2>
+  <form action="{{ url_for('add_project') }}" method="POST">
+    <input type="text" name="project_name" placeholder="Project Name" required>
+    <select name="area_id" required>
+      {% for area in areas %}
+      <option value="{{ loop.index0 }}">{{ area.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Add Project</button>
+  </form>
+
+  <h2>Add Task</h2>
+  <form action="{{ url_for('add_task') }}" method="POST">
+    <input type="text" name="task_name" placeholder="Task Name" required>
+    <input type="date" name="due_date" required>
+    <select name="priority" required>
+      <option value="Must Do Today">Must Do Today</option>
+      <option value="Should Do Today">Should Do Today</option>
+      <option value="Could Do Today">Could Do Today</option>
+      <option value="Nice to Do Today">Nice to Do Today</option>
+    </select>
+    <select name="project_id" required>
+      {% for area in areas %}
+      {% for project in area.projects %}
+      <option value="{{ loop.index0 }}">{{ project.name }}</option>
+      {% endfor %}
+      {% endfor %}
+    </select>
+    <button type="submit">Add Task</button>
+  </form>
+
+  <h2>Daily Agenda</h2>
+  <ul>
+    {% for task in daily_tasks %}
+    <li>{{ task.name }} - {{ task.due_date }} - {{ task.priority }}</li>
+    {% endfor %}
+  </ul>
+</body>
+
+</html>
