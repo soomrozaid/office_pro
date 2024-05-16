@@ -5,15 +5,107 @@
   <meta charset="UTF-8">
   <title>Office Pro</title>
   <style>
-    .completed {
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f7f7f7;
+      color: #333;
+    }
+
+    h1 {
+      color: #333;
+      font-size: 24px;
+    }
+
+    .section {
+      margin-bottom: 20px;
+      padding: 20px;
+      border-radius: 8px;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .section h2 {
+      font-size: 18px;
+      margin-top: 0;
+    }
+
+    .form-container {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-container input,
+    .form-container select,
+    .form-container button {
+      margin-bottom: 10px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    .task-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .task-list li {
+      margin-bottom: 10px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .task-list li.completed {
       text-decoration: line-through;
       color: grey;
     }
+
+    .area-title,
+    .project-title {
+      margin-bottom: 20px;
+      padding: 10px;
+      border-radius: 5px;
+      background-color: #f0f0f0;
+    }
+
+    .area-title {
+      font-size: 20px;
+      color: #0056b3;
+    }
+
+    .project-title {
+      font-size: 18px;
+      color: #28a745;
+    }
+
+    .task-title {
+      flex-grow: 1;
+    }
+
+    .filter-container {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .filter-container select {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
   </style>
   <script>
-    function updateSortCriteria() {
-      const sortCriteria = document.getElementById('sortCriteria').value;
-      window.location.href = `/?sort=${sortCriteria}`;
+    function updateFilter() {
+      const statusFilter = document.getElementById('statusFilter').value;
+      const priorityFilter = document.getElementById('priorityFilter').value;
+      window.location.href = `/?status=${statusFilter}&priority=${priorityFilter}`;
     }
   </script>
 </head>
@@ -21,96 +113,110 @@
 <body>
   <h1>Office Pro</h1>
 
-  <h2>Areas</h2>
-  <form action="{{ url_for('add_area') }}" method="POST">
-    <input type="text" name="area_name" placeholder="Area Name" required>
-    <input type="text" name="time_commitment" placeholder="Time Commitment (hours/week)" required>
-    <button type="submit">Add Area</button>
-  </form>
-  <ul>
+  <div class="section">
+    <h2>Add Area</h2>
+    <div class="form-container">
+      <form action="{{ url_for('add_area') }}" method="POST">
+        <input type="text" name="area_name" placeholder="Area Name" required>
+        <input type="text" name="time_commitment" placeholder="Time Commitment (hours/week)" required>
+        <button type="submit">Add Area</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="section">
     {% for area_index in range(areas|length) %}
-    <li>{{ areas[area_index].name }} - {{ areas[area_index].time_commitment }} hours/week
-      <ul>
-        {% for project_index in range(areas[area_index].projects|length) %}
-        <li>{{ areas[area_index].projects[project_index].name }}
-          <ul>
-            {% for task in areas[area_index].projects[project_index].tasks %}
-            <li class="{% if task.completed %}completed{% endif %}">
-              <form action="{{ url_for('complete_task', task_id=tasks.index(task)) }}" method="POST"
-                style="display:inline;">
-                <input type="checkbox" onchange="this.form.submit()" {% if task.completed %}checked{% endif %}>
-              </form>
-              {{ task.name }} - {{ task.due_date }} - {{ task.priority }}
-              <form action="{{ url_for('edit_task', task_id=tasks.index(task)) }}" method="POST"
-                style="display:inline;">
-                <input type="text" name="task_name" value="{{ task.name }}" required>
-                <input type="date" name="due_date" value="{{ task.due_date }}" required>
-                <select name="priority" required>
-                  <option value="Must Do Today" {% if task.priority=='Must Do Today' %}selected{% endif %}>Must Do Today
-                  </option>
-                  <option value="Should Do Today" {% if task.priority=='Should Do Today' %}selected{% endif %}>Should Do
-                    Today</option>
-                  <option value="Could Do Today" {% if task.priority=='Could Do Today' %}selected{% endif %}>Could Do
-                    Today</option>
-                  <option value="Nice to Do Today" {% if task.priority=='Nice to Do Today' %}selected{% endif %}>Nice to
-                    Do Today</option>
-                </select>
-                <button type="submit">Edit</button>
-              </form>
-              <a href="{{ url_for('delete_task', task_id=tasks.index(task)) }}">Delete</a>
-            </li>
-            {% endfor %}
-          </ul>
-        </li>
-        {% endfor %}
-      </ul>
-    </li>
+    <div class="area-title">
+      <h3>{{ areas[area_index].name }} - {{ areas[area_index].time_commitment }} hours/week</h3>
+    </div>
+    <div class="form-container">
+      <h4>Add Project</h4>
+      <form action="{{ url_for('add_project') }}" method="POST">
+        <input type="text" name="project_name" placeholder="Project Name" required>
+        <input type="hidden" name="area_id" value="{{ area_index }}">
+        <button type="submit">Add Project</button>
+      </form>
+    </div>
+    {% for project_index in range(areas[area_index].projects|length) %}
+    <div class="project-title">
+      <h4>{{ areas[area_index].projects[project_index].name }}</h4>
+    </div>
+    <div class="form-container">
+      <h5>Add Task</h5>
+      <form action="{{ url_for('add_task') }}" method="POST">
+        <input type="text" name="task_name" placeholder="Task Name" required>
+        <input type="date" name="due_date" required>
+        <select name="priority" required>
+          <option value="Must Do Today">Must Do Today</option>
+          <option value="Should Do Today">Should Do Today</option>
+          <option value="Could Do Today">Could Do Today</option>
+          <option value="Nice to Do Today">Nice to Do Today</option>
+        </select>
+        <input type="hidden" name="project_id" value="{{ area_index }}-{{ project_index }}">
+        <button type="submit">Add Task</button>
+      </form>
+    </div>
+    <ul class="task-list">
+      {% for task in areas[area_index].projects[project_index].tasks %}
+      <li class="{% if task.completed %}completed{% endif %}">
+        <form action="{{ url_for('complete_task', task_id=tasks.index(task)) }}" method="POST" style="display:inline;">
+          <input type="checkbox" onchange="this.form.submit()" {% if task.completed %}checked{% endif %}>
+        </form>
+        <span class="task-title">{{ task.name }} - {{ task.due_date }} - {{ task.priority }}</span>
+        <form action="{{ url_for('edit_task', task_id=tasks.index(task)) }}" method="POST" style="display:inline;">
+          <input type="text" name="task_name" value="{{ task.name }}" required>
+          <input type="date" name="due_date" value="{{ task.due_date }}" required>
+          <select name="priority" required>
+            <option value="Must Do Today" {% if task.priority=='Must Do Today' %}selected{% endif %}>Must Do Today
+            </option>
+            <option value="Should Do Today" {% if task.priority=='Should Do Today' %}selected{% endif %}>Should Do Today
+            </option>
+            <option value="Could Do Today" {% if task.priority=='Could Do Today' %}selected{% endif %}>Could Do Today
+            </option>
+            <option value="Nice to Do Today" {% if task.priority=='Nice to Do Today' %}selected{% endif %}>Nice to Do
+              Today</option>
+          </select>
+          <button type="submit">Edit</button>
+        </form>
+        <a href="{{ url_for('delete_task', task_id=tasks.index(task)) }}">Delete</a>
+      </li>
+      {% endfor %}
+    </ul>
     {% endfor %}
-  </ul>
-
-  <h2>Add Project</h2>
-  <form action="{{ url_for('add_project') }}" method="POST">
-    <input type="text" name="project_name" placeholder="Project Name" required>
-    <select name="area_id" required>
-      {% for area_index in range(areas|length) %}
-      <option value="{{ area_index }}">{{ areas[area_index].name }}</option>
-      {% endfor %}
-    </select>
-    <button type="submit">Add Project</button>
-  </form>
-
-  <h2>Add Task</h2>
-  <form action="{{ url_for('add_task') }}" method="POST">
-    <input type="text" name="task_name" placeholder="Task Name" required>
-    <input type="date" name="due_date" required>
-    <select name="priority" required>
-      <option value="Must Do Today">Must Do Today</option>
-      <option value="Should Do Today">Should Do Today</option>
-      <option value="Could Do Today">Could Do Today</option>
-      <option value="Nice to Do Today">Nice to Do Today</option>
-    </select>
-    <select name="project_id" required>
-      {% for area_index in range(areas|length) %}
-      {% for project_index in range(areas[area_index].projects|length) %}
-      <option value="{{ area_index }}-{{ project_index }}">{{ areas[area_index].projects[project_index].name }} ({{
-        areas[area_index].name }})</option>
-      {% endfor %}
-      {% endfor %}
-    </select>
-    <button type="submit">Add Task</button>
-  </form>
-
-  <h2>Daily Agenda</h2>
-  <label for="sortCriteria">Sort By:</label>
-  <select id="sortCriteria" onchange="updateSortCriteria()">
-    <option value="priority" {% if sort_criteria=='priority' %}selected{% endif %}>Priority</option>
-    <option value="due_date" {% if sort_criteria=='due_date' %}selected{% endif %}>Due Date</option>
-  </select>
-  <ul>
-    {% for task in daily_tasks %}
-    <li>{{ task.name }} - {{ task.due_date }} - {{ task.priority }}</li>
     {% endfor %}
-  </ul>
+  </div>
+
+  <div class="section">
+    <h2>Daily Agenda</h2>
+    <div class="filter-container">
+      <label for="statusFilter">Filter By Status:</label>
+      <select id="statusFilter" onchange="updateFilter()">
+        <option value="all" {% if status_filter=='all' %}selected{% endif %}>All</option>
+        <option value="completed" {% if status_filter=='completed' %}selected{% endif %}>Completed</option>
+        <option value="incomplete" {% if status_filter=='incomplete' %}selected{% endif %}>Incomplete</option>
+      </select>
+
+      <label for="priorityFilter">Filter By Priority:</label>
+      <select id="priorityFilter" onchange="updateFilter()">
+        <option value="all" {% if priority_filter=='all' %}selected{% endif %}>All</option>
+        <option value="Must Do Today" {% if priority_filter=='Must Do Today' %}selected{% endif %}>Must Do Today
+        </option>
+        <option value="Should Do Today" {% if priority_filter=='Should Do Today' %}selected{% endif %}>Should Do Today
+        </option>
+        <option value="Could Do Today" {% if priority_filter=='Could Do Today' %}selected{% endif %}>Could Do Today
+        </option>
+        <option value="Nice to Do Today" {% if priority_filter=='Nice to Do Today' %}selected{% endif %}>Nice to Do
+          Today</option>
+      </select>
+    </div>
+
+    <ul class="task-list">
+      {% for task in daily_tasks %}
+      <li class="{{ 'completed' if task.completed else '' }}">{{ task.name }} - {{ task.due_date }} - {{ task.priority
+        }}</li>
+      {% endfor %}
+    </ul>
+  </div>
 </body>
 
 </html>

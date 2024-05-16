@@ -12,34 +12,38 @@ tasks = []
 @app.route("/")
 def index():
     today = datetime.today().strftime("%Y-%m-%d")
-    daily_tasks = [
-        task
-        for task in tasks
-        if task["due_date"] == today and not task.get("completed")
-    ]
+    status_filter = request.args.get("status", "all")
+    priority_filter = request.args.get("priority", "all")
 
-    sort_criteria = request.args.get("sort", "priority")
-    if sort_criteria == "priority":
-        sorted_tasks = sorted(
-            daily_tasks,
-            key=lambda x: [
-                "Must Do Today",
-                "Should Do Today",
-                "Could Do Today",
-                "Nice to Do Today",
-            ].index(x["priority"]),
-        )
-    elif sort_criteria == "due_date":
-        sorted_tasks = sorted(daily_tasks, key=lambda x: x["due_date"])
-    else:
-        sorted_tasks = daily_tasks
+    daily_tasks = [task for task in tasks if task["due_date"] == today]
+
+    if status_filter == "completed":
+        daily_tasks = [task for task in daily_tasks if task.get("completed")]
+    elif status_filter == "incomplete":
+        daily_tasks = [task for task in daily_tasks if not task.get("completed")]
+
+    if priority_filter != "all":
+        daily_tasks = [
+            task for task in daily_tasks if task["priority"] == priority_filter
+        ]
+
+    daily_tasks = sorted(
+        daily_tasks,
+        key=lambda x: [
+            "Must Do Today",
+            "Should Do Today",
+            "Could Do Today",
+            "Nice to Do Today",
+        ].index(x["priority"]),
+    )
 
     return render_template(
         "index.html",
         areas=areas,
         tasks=tasks,
-        daily_tasks=sorted_tasks,
-        sort_criteria=sort_criteria,
+        daily_tasks=daily_tasks,
+        status_filter=status_filter,
+        priority_filter=priority_filter,
     )
 
 
