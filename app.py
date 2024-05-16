@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for
 from datetime import datetime
 
 app = Flask(__name__)
+app.secret_key = "supersecretkey"
 
 # Dummy data
 areas = []
@@ -16,17 +17,29 @@ def index():
         for task in tasks
         if task["due_date"] == today and not task.get("completed")
     ]
-    sorted_tasks = sorted(
-        daily_tasks,
-        key=lambda x: [
-            "Must Do Today",
-            "Should Do Today",
-            "Could Do Today",
-            "Nice to Do Today",
-        ].index(x["priority"]),
-    )
+
+    sort_criteria = request.args.get("sort", "priority")
+    if sort_criteria == "priority":
+        sorted_tasks = sorted(
+            daily_tasks,
+            key=lambda x: [
+                "Must Do Today",
+                "Should Do Today",
+                "Could Do Today",
+                "Nice to Do Today",
+            ].index(x["priority"]),
+        )
+    elif sort_criteria == "due_date":
+        sorted_tasks = sorted(daily_tasks, key=lambda x: x["due_date"])
+    else:
+        sorted_tasks = daily_tasks
+
     return render_template(
-        "index.html", areas=areas, tasks=tasks, daily_tasks=sorted_tasks
+        "index.html",
+        areas=areas,
+        tasks=tasks,
+        daily_tasks=sorted_tasks,
+        sort_criteria=sort_criteria,
     )
 
 
