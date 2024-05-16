@@ -57,14 +57,6 @@ def add_area():
     return redirect(url_for("index"))
 
 
-@app.route("/edit_area/<int:area_index>", methods=["POST"])
-def edit_area(area_index):
-    area = areas[area_index]
-    area["name"] = request.form.get("area_name")
-    area["time_commitment"] = request.form.get("time_commitment")
-    return redirect(url_for("index"))
-
-
 @app.route("/add_project", methods=["POST"])
 def add_project():
     project_name = request.form.get("project_name")
