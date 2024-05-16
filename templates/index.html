@@ -1,319 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "layout.html" %}
 
-<head>
-  <meta charset="UTF-8">
-  <title>Office Pro</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
-      color: #333;
-      margin: 0;
-      padding: 0;
-    }
-
-    header {
-      background-color: #333;
-      color: #fff;
-      padding: 10px 20px;
-      text-align: center;
-      font-size: 24px;
-    }
-
-    .container {
-      padding: 20px;
-    }
-
-    .section {
-      margin-bottom: 20px;
-      padding: 15px;
-      border-radius: 8px;
-      background-color: #fff;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .section h2 {
-      font-size: 18px;
-      margin-top: 0;
-    }
-
-    .form-container {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .form-container input,
-    .form-container select,
-    .form-container button {
-      margin-bottom: 10px;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 16px;
-    }
-
-    .task-list {
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    .task-list li {
-      margin-bottom: 10px;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      background-color: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .task-list li.completed {
-      text-decoration: line-through;
-      color: grey;
-    }
-
-    .area-title,
-    .project-title {
-      margin-bottom: 10px;
-      padding: 10px;
-      border-radius: 5px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .area-title {
-      font-size: 20px;
-      color: #0056b3;
-      background-color: #e3f2fd;
-    }
-
-    .project-title {
-      font-size: 18px;
-      color: #28a745;
-      background-color: #eafaf1;
-    }
-
-    .task-title {
-      flex-grow: 1;
-    }
-
-    .filter-container {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .filter-container select {
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0, 0, 0, 0.4);
-      padding-top: 60px;
-    }
-
-    .modal-content {
-      background-color: #fff;
-      margin: 5% auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 80%;
-      border-radius: 8px;
-    }
-
-    .close {
-      color: #aaa;
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
-    }
-
-    .close:hover,
-    .close:focus {
-      color: black;
-      text-decoration: none;
-      cursor: pointer;
-    }
-  </style>
-  <script>
-    function toggleVisibility(id) {
-      var element = document.getElementById(id);
-      var icon = document.getElementById('icon-' + id);
-      if (element.style.display === "none") {
-        element.style.display = "block";
-        icon.classList.remove('fa-chevron-down');
-        icon.classList.add('fa-chevron-up');
-      } else {
-        element.style.display = "none";
-        icon.classList.remove('fa-chevron-up');
-        icon.classList.add('fa-chevron-down');
-      }
-    }
-    function openModal(modalId) {
-      document.getElementById(modalId).style.display = "block";
-    }
-    function closeModal(modalId) {
-      document.getElementById(modalId).style.display = "none";
-    }
-    function updateFilter() {
-      const statusFilter = document.getElementById('statusFilter').value;
-      const priorityFilter = document.getElementById('priorityFilter').value;
-      window.location.href = `/?status=${statusFilter}&priority=${priorityFilter}`;
-    }
-  </script>
-</head>
-
-<body>
-  <header>
-    Office Pro
-  </header>
-
-  <div class="container">
-    <div class="section">
-      <h2>Areas <button onclick="openModal('addAreaModal')">Add Area</button></h2>
-      <div id="addAreaModal" class="modal">
-        <div class="modal-content">
-          <span class="close" onclick="closeModal('addAreaModal')">&times;</span>
-          <h2>Add Area</h2>
-          <form action="{{ url_for('add_area') }}" method="POST">
-            <input type="text" name="area_name" placeholder="Area Name" required>
-            <input type="text" name="time_commitment" placeholder="Time Commitment (hours/week)" required>
-            <button type="submit">Add Area</button>
-          </form>
-        </div>
-      </div>
-
-      {% for area_index in range(areas|length) %}
-      <div class="area-title" onclick="toggleVisibility('area-{{ area_index }}')">
-        <span>{{ areas[area_index].name }} - {{ areas[area_index].time_commitment }} hours/week</span>
-        <span>
-          <i id="icon-area-{{ area_index }}" class="fas fa-chevron-down"></i>
-          <button onclick="openModal('editAreaModal-{{ area_index }}'); event.stopPropagation();">Edit</button>
-        </span>
-      </div>
-      <div id="editAreaModal-{{ area_index }}" class="modal">
-        <div class="modal-content">
-          <span class="close" onclick="closeModal('editAreaModal-{{ area_index }}')">&times;</span>
-          <h2>Edit Area</h2>
-          <form action="{{ url_for('edit_area', area_index=area_index) }}" method="POST">
-            <input type="text" name="area_name" value="{{ areas[area_index].name }}" required>
-            <input type="text" name="time_commitment" value="{{ areas[area_index].time_commitment }}" required>
-            <button type="submit">Save Changes</button>
-          </form>
-        </div>
-      </div>
-      <div id="area-{{ area_index }}" style="display: none;">
-        <div class="form-container">
-          <h4>Add Project</h4>
-          <form action="{{ url_for('add_project') }}" method="POST">
-            <input type="text" name="project_name" placeholder="Project Name" required>
-            <input type="hidden" name="area_id" value="{{ area_index }}">
-            <button type="submit">Add Project</button>
-          </form>
-        </div>
-        {% for project_index in range(areas[area_index].projects|length) %}
-        <div class="project-title" onclick="toggleVisibility('project-{{ area_index }}-{{ project_index }}')">
-          <span>{{ areas[area_index].projects[project_index].name }}</span>
-          <i id="icon-project-{{ area_index }}-{{ project_index }}" class="fas fa-chevron-down"></i>
-        </div>
-        <div id="project-{{ area_index }}-{{ project_index }}" style="display: none;">
-          <div class="form-container">
-            <h5>Add Task</h5>
-            <form action="{{ url_for('add_task') }}" method="POST">
-              <input type="text" name="task_name" placeholder="Task Name" required>
-              <input type="date" name="due_date" required>
-              <select name="priority" required>
-                <option value="Must Do Today">Must Do Today</option>
-                <option value="Should Do Today">Should Do Today</option>
-                <option value="Could Do Today">Could Do Today</option>
-                <option value="Nice to Do Today">Nice to Do Today</option>
-              </select>
-              <input type="hidden" name="project_id" value="{{ area_index }}-{{ project_index }}">
-              <button type="submit">Add Task</button>
-            </form>
-          </div>
-          <ul class="task-list">
-            {% for task in areas[area_index].projects[project_index].tasks %}
-            <li class="{% if task.completed %}completed{% endif %}">
-              <form action="{{ url_for('complete_task', task_id=tasks.index(task)) }}" method="POST"
-                style="display:inline;">
-                <input type="checkbox" onchange="this.form.submit()" {% if task.completed %}checked{% endif %}>
-              </form>
-              <span class="task-title">{{ task.name }} - {{ task.due_date }} - {{ task.priority }}</span>
-              <form action="{{ url_for('edit_task', task_id=tasks.index(task)) }}" method="POST"
-                style="display:inline;">
-                <input type="text" name="task_name" value="{{ task.name }}" required>
-                <input type="date" name="due_date" value="{{ task.due_date }}" required>
-                <select name="priority" required>
-                  <option value="Must Do Today" {% if task.priority=='Must Do Today' %}selected{% endif %}>Must Do Today
-                  </option>
-                  <option value="Should Do Today" {% if task.priority=='Should Do Today' %}selected{% endif %}>Should Do
-                    Today</option>
-                  <option value="Could Do Today" {% if task.priority=='Could Do Today' %}selected{% endif %}>Could Do
-                    Today</option>
-                  <option value="Nice to Do Today" {% if task.priority=='Nice to Do Today' %}selected{% endif %}>Nice to
-                    Do Today</option>
-                </select>
-                <button type="submit">Edit</button>
-              </form>
-              <a href="{{ url_for('delete_task', task_id=tasks.index(task)) }}">Delete</a>
-            </li>
-            {% endfor %}
-          </ul>
-        </div>
-        {% endfor %}
-      </div>
-      {% endfor %}
+{% block content %}
+<div class="section">
+  <h2>Areas <button onclick="openModal('addAreaModal')">Add Area</button></h2>
+  <div id="addAreaModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('addAreaModal')">&times;</span>
+      <h2>Add Area</h2>
+      <form action="{{ url_for('add_area') }}" method="POST">
+        <input type="text" name="area_name" placeholder="Area Name" required>
+        <input type="text" name="time_commitment" placeholder="Time Commitment (hours/week)" required>
+        <button type="submit">Add Area</button>
+      </form>
     </div>
+  </div>
 
-    <div class="section">
-      <h2>Daily Agenda</h2>
-      <div class="filter-container">
-        <label for="statusFilter">Filter By Status:</label>
-        <select id="statusFilter" onchange="updateFilter()">
-          <option value="all" {% if status_filter=='all' %}selected{% endif %}>All</option>
-          <option value="completed" {% if status_filter=='completed' %}selected{% endif %}>Completed</option>
-          <option value="incomplete" {% if status_filter=='incomplete' %}selected{% endif %}>Incomplete</option>
-        </select>
-
-        <label for="priorityFilter">Filter By Priority:</label>
-        <select id="priorityFilter" onchange="updateFilter()">
-          <option value="all" {% if priority_filter=='all' %}selected{% endif %}>All</option>
-          <option value="Must Do Today" {% if priority_filter=='Must Do Today' %}selected{% endif %}>Must Do Today
-          </option>
-          <option value="Should Do Today" {% if priority_filter=='Should Do Today' %}selected{% endif %}>Should Do Today
-          </option>
-          <option value="Could Do Today" {% if priority_filter=='Could Do Today' %}selected{% endif %}>Could Do Today
-          </option>
-          <option value="Nice to Do Today" {% if priority_filter=='Nice to Do Today' %}selected{% endif %}>Nice to Do
-            Today</option>
-        </select>
+  {% for area_index in range(areas|length) %}
+  <div class="area-title" onclick="toggleVisibility('area-{{ area_index }}')">
+    <span>{{ areas[area_index].name }} - {{ areas[area_index].time_commitment }} hours/week</span>
+    <span>
+      <i id="icon-area-{{ area_index }}" class="fas fa-chevron-down"></i>
+      <button onclick="openModal('editAreaModal-{{ area_index }}'); event.stopPropagation();">Edit</button>
+    </span>
+  </div>
+  <div id="editAreaModal-{{ area_index }}" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('editAreaModal-{{ area_index }}')">&times;</span>
+      <h2>Edit Area</h2>
+      <form action="{{ url_for('edit_area', area_index=area_index) }}" method="POST">
+        <input type="text" name="area_name" value="{{ areas[area_index].name }}" required>
+        <input type="text" name="time_commitment" value="{{ areas[area_index].time_commitment }}" required>
+        <button type="submit">Save Changes</button>
+      </form>
+    </div>
+  </div>
+  <div id="area-{{ area_index }}" style="display: none;">
+    <div class="form-container">
+      <h4>Add Project</h4>
+      <form action="{{ url_for('add_project') }}" method="POST">
+        <input type="text" name="project_name" placeholder="Project Name" required>
+        <input type="hidden" name="area_id" value="{{ area_index }}">
+        <button type="submit">Add Project</button>
+      </form>
+    </div>
+    {% for project_index in range(areas[area_index].projects|length) %}
+    <div class="project-title" onclick="toggleVisibility('project-{{ area_index }}-{{ project_index }}')">
+      <span>{{ areas[area_index].projects[project_index].name }}</span>
+      <i id="icon-project-{{ area_index }}-{{ project_index }}" class="fas fa-chevron-down"></i>
+    </div>
+    <div id="project-{{ area_index }}-{{ project_index }}" style="display: none;">
+      <div class="form-container">
+        <h5>Add Task</h5>
+        <form action="{{ url_for('add_task') }}" method="POST">
+          <input type="text" name="task_name" placeholder="Task Name" required>
+          <input type="date" name="due_date" required>
+          <select name="priority" required>
+            <option value="Must Do Today">Must Do Today</option>
+            <option value="Should Do Today">Should Do Today</option>
+            <option value="Could Do Today">Could Do Today</option>
+            <option value="Nice to Do Today">Nice to Do Today</option>
+          </select>
+          <input type="hidden" name="project_id" value="{{ area_index }}-{{ project_index }}">
+          <button type="submit">Add Task</button>
+        </form>
       </div>
-
       <ul class="task-list">
-        {% for task in daily_tasks %}
-        <li class="{{ 'completed' if task.completed else '' }}">{{ task.name }} - {{ task.due_date }} - {{ task.priority
-          }}</li>
+        {% for task in areas[area_index].projects[project_index].tasks %}
+        <li class="{% if task.completed %}completed{% endif %}">
+          <form action="{{ url_for('complete_task', task_id=tasks.index(task)) }}" method="POST"
+            style="display:inline;">
+            <input type="checkbox" onchange="this.form.submit()" {% if task.completed %}checked{% endif %}>
+          </form>
+          <span class="task-title">{{ task.name }} - {{ task.due_date }} - {{ task.priority }}</span>
+          <form action="{{ url_for('edit_task', task_id=tasks.index(task)) }}" method="POST" style="display:inline;">
+            <input type="text" name="task_name" value="{{ task.name }}" required>
+            <input type="date" name="due_date" value="{{ task.due_date }}" required>
+            <select name="priority" required>
+              <option value="Must Do Today" {% if task.priority=='Must Do Today' %}selected{% endif %}>Must Do Today
+              </option>
+              <option value="Should Do Today" {% if task.priority=='Should Do Today' %}selected{% endif %}>Should Do
+                Today</option>
+              <option value="Could Do Today" {% if task.priority=='Could Do Today' %}selected{% endif %}>Could Do Today
+              </option>
+              <option value="Nice to Do Today" {% if task.priority=='Nice to Do Today' %}selected{% endif %}>Nice to Do
+                Today</option>
+            </select>
+            <button type="submit">Edit</button>
+          </form>
+          <a href="{{ url_for('delete_task', task_id=tasks.index(task)) }}">Delete</a>
+        </li>
         {% endfor %}
       </ul>
     </div>
+    {% endfor %}
   </div>
-</body>
+  {% endfor %}
+</div>
 
-</html>
+<div class="section">
+  <h2>Daily Agenda</h2>
+  <div class="filter-container">
+    <label for="statusFilter">Filter By Status:</label>
+    <select id="statusFilter" onchange="updateFilter()">
+      <option value="all" {% if status_filter=='all' %}selected{% endif %}>All</option>
+      <option value="completed" {% if status_filter=='completed' %}selected{% endif %}>Completed</option>
+      <option value="incomplete" {% if status_filter=='incomplete' %}selected{% endif %}>Incomplete</option>
+    </select>
+
+    <label for="priorityFilter">Filter By Priority:</label>
+    <select id="priorityFilter" onchange="updateFilter()">
+      <option value="all" {% if priority_filter=='all' %}selected{% endif %}>All</option>
+      <option value="Must Do Today" {% if priority_filter=='Must Do Today' %}selected{% endif %}>Must Do Today</option>
+      <option value="Should Do Today" {% if priority_filter=='Should Do Today' %}selected{% endif %}>Should Do Today
+      </option>
+      <option value="Could Do Today" {% if priority_filter=='Could Do Today' %}selected{% endif %}>Could Do Today
+      </option>
+      <option value="Nice to Do Today" {% if priority_filter=='Nice to Do Today' %}selected{% endif %}>Nice to Do Today
+      </option>
+    </select>
+  </div>
+
+  <ul class="task-list">
+    {% for task in daily_tasks %}
+    <li class="{{ 'completed' if task.completed else '' }}">{{ task.name }} - {{ task.due_date }} - {{ task.priority }}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
