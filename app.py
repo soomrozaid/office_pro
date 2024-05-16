@@ -54,7 +54,9 @@ def add_task():
     task_name = request.form.get("task_name")
     due_date = request.form.get("due_date")
     priority = request.form.get("priority")
-    project_id = int(request.form.get("project_id"))
+    project_id = request.form.get("project_id").split("-")
+    area_index = int(project_id[0])
+    project_index = int(project_id[1])
     task = {
         "name": task_name,
         "due_date": due_date,
@@ -62,10 +64,7 @@ def add_task():
         "completed": False,
     }
     tasks.append(task)
-    for area in areas:
-        for project in area["projects"]:
-            if project == area["projects"][project_id]:
-                project["tasks"].append(task)
+    areas[area_index]["projects"][project_index]["tasks"].append(task)
     return redirect(url_for("index"))
 
 

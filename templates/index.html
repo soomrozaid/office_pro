@@ -22,13 +22,13 @@
     <button type="submit">Add Area</button>
   </form>
   <ul>
-    {% for area in areas %}
-    <li>{{ area.name }} - {{ area.time_commitment }} hours/week
+    {% for area_index in range(areas|length) %}
+    <li>{{ areas[area_index].name }} - {{ areas[area_index].time_commitment }} hours/week
       <ul>
-        {% for project in area.projects %}
-        <li>{{ project.name }}
+        {% for project_index in range(areas[area_index].projects|length) %}
+        <li>{{ areas[area_index].projects[project_index].name }}
           <ul>
-            {% for task in project.tasks %}
+            {% for task in areas[area_index].projects[project_index].tasks %}
             <li class="{% if task.completed %}completed{% endif %}">
               <form action="{{ url_for('complete_task', task_id=loop.index0) }}" method="POST" style="display:inline;">
                 <input type="checkbox" onchange="this.form.submit()" {% if task.completed %}checked{% endif %}>
@@ -64,8 +64,8 @@
   <form action="{{ url_for('add_project') }}" method="POST">
     <input type="text" name="project_name" placeholder="Project Name" required>
     <select name="area_id" required>
-      {% for area in areas %}
-      <option value="{{ loop.index0 }}">{{ area.name }}</option>
+      {% for area_index in range(areas|length) %}
+      <option value="{{ area_index }}">{{ areas[area_index].name }}</option>
       {% endfor %}
     </select>
     <button type="submit">Add Project</button>
@@ -82,9 +82,10 @@
       <option value="Nice to Do Today">Nice to Do Today</option>
     </select>
     <select name="project_id" required>
-      {% for area in areas %}
-      {% for project in area.projects %}
-      <option value="{{ loop.index0 }}">{{ project.name }}</option>
+      {% for area_index in range(areas|length) %}
+      {% for project_index in range(areas[area_index].projects|length) %}
+      <option value="{{ area_index }}-{{ project_index }}">{{ areas[area_index].projects[project_index].name }} ({{
+        areas[area_index].name }})</option>
       {% endfor %}
       {% endfor %}
     </select>
